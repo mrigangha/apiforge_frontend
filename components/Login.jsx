@@ -1,24 +1,23 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BACKEND_API } from "../lib/store";
 import { useAuth } from "../lib/AuthContext";
-import { useEffect } from "react";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { accessToken, setAccessToken } = useAuth();
   const router = useRouter();
+
   useEffect(() => {
-    // if token already in memory, just redirect
     if (accessToken) {
       router.push("/profile");
       return;
     }
 
-    // try refresh cookie silently
     async function tryRefresh() {
       try {
         const res = await fetch(`${BACKEND_API}/api/v1/auth/refresh`, {
@@ -39,30 +38,26 @@ export default function Login() {
 
     tryRefresh();
   }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log(form.email, form.password);
+    setError(null);
     try {
       const response = await fetch(`${BACKEND_API}/api/v1/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-        }),
+        body: JSON.stringify({ email: form.email, password: form.password }),
       });
       if (!response.ok) {
-        throw new Error("Login failed");
+        throw new Error("Unable to login, please try again");
       }
       const data = await response.json();
       setAccessToken(data.access_token);
       router.push("/profile");
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -148,9 +143,16 @@ export default function Login() {
           margin-bottom: 2.5rem;
         }
 
-        .field {
+        .error-msg {
+          font-size: 0.8rem;
+          color: #ef4444;
           margin-bottom: 1.25rem;
+          padding: 0.6rem 1rem;
+          border: 1px solid rgba(239,68,68,0.3);
+          background: rgba(239,68,68,0.05);
         }
+
+        .field { margin-bottom: 1.25rem; }
 
         label {
           display: block;
@@ -173,13 +175,8 @@ export default function Login() {
           transition: border-color 0.2s;
         }
 
-        input:focus {
-          border-color: var(--gold);
-        }
-
-        input::placeholder {
-          color: rgba(245,245,240,0.2);
-        }
+        input:focus { border-color: var(--gold); }
+        input::placeholder { color: rgba(245,245,240,0.2); }
 
         .btn-submit {
           width: 100%;
@@ -198,6 +195,7 @@ export default function Login() {
         }
 
         .btn-submit:hover { opacity: 0.85; }
+        .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .footer-text {
           margin-top: 1.5rem;
@@ -235,6 +233,8 @@ export default function Login() {
           </div>
           <h1>Welcome Back</h1>
           <p className="subtitle">Sign in to your account to continue</p>
+
+          {error && <div className="error-msg">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="field">

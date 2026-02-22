@@ -17,8 +17,8 @@ Next.js 16 frontend for the APIFORGE application with React 19 and Tailwind CSS 
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
-cd assignment/frontend
+git clone https://github.com/mrigangha/apiforge_frontend.git
+cd apiforge_frontend
 ```
 
 ### 2. Install dependencies
